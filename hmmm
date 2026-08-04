@@ -1,0 +1,2210 @@
+local cloneref = cloneref or function(ref)
+	return ref;
+end
+local GetService = game.GetService
+local Services = setmetatable({}, {
+    __index = function(self, Property)
+        local Good, Service = pcall(GetService, game, Property);
+        if (Good) then
+            self[Property] = cloneref(Service);
+            return Service
+        end
+    end
+});
+
+local GetPlayers = Services.Players.GetPlayers
+local JSONEncode, JSONDecode, GenerateGUID =
+    Services.HttpService.JSONEncode,
+    Services.HttpService.JSONDecode,
+    Services.HttpService.GenerateGUID
+
+local GetPropertyChangedSignal, Changed =
+    game.GetPropertyChangedSignal,
+    game.Changed
+
+local GetChildren, GetDescendants = game.GetChildren, game.GetDescendants
+local IsA = game.IsA
+local FindFirstChild, FindFirstChildWhichIsA, WaitForChild =
+    game.FindFirstChild,
+    game.FindFirstChildWhichIsA,
+    game.WaitForChild
+
+local Tfind, sort, concat, pack, unpack;
+do
+    local table = table
+    Tfind, sort, concat, pack, unpack =
+        table.find,
+        table.sort,
+        table.concat,
+        table.pack,
+        table.unpack
+end
+
+local lower, Sfind, split, sub, format, len, match, gmatch, gsub, byte;
+do
+    local string = string
+    lower, Sfind, split, sub, format, len, match, gmatch, gsub, byte =
+        string.lower,
+        string.find,
+        string.split,
+        string.sub,
+        string.format,
+        string.len,
+        string.match,
+        string.gmatch,
+        string.gsub,
+        string.byte
+end
+
+local random, floor, round, abs, atan, cos, sin, rad;
+do
+    local math = math
+    random, floor, round, abs, atan, cos, sin, rad, clamp =
+        math.random,
+        math.floor,
+        math.round,
+        math.abs,
+        math.atan,
+        math.cos,
+        math.sin,
+        math.rad,
+        math.clamp
+end
+
+local Instancenew = Instance.new
+local Vector3new = Vector3.new
+local Vector2new = Vector2.new
+local UDim2new = UDim2.new
+local UDimnew = UDim.new
+local CFramenew = CFrame.new
+local BrickColornew = BrickColor.new
+local Drawingnew = Drawing.new
+local Color3new = Color3.new
+local Color3fromRGB = Color3.fromRGB
+local Color3fromHSV = Color3.fromHSV
+local ToHSV = Color3new().ToHSV
+
+local Camera = Services.Workspace.CurrentCamera
+local WorldToViewportPoint = Camera.WorldToViewportPoint
+local GetPartsObscuringTarget = Camera.GetPartsObscuringTarget
+
+local LocalPlayer = Services.Players.LocalPlayer
+local Mouse = LocalPlayer and LocalPlayer.GetMouse(LocalPlayer);
+
+local Destroy, Clone = game.Destroy, game.Clone
+
+local Connection = game.Loaded
+local CWait = Connection.Wait
+local CConnect = Connection.Connect
+
+local Disconnect;
+do
+    local CalledConnection = CConnect(Connection, function() end);
+    Disconnect = CalledConnection.Disconnect
+end
+
+local Connections = {}
+local AddConnection = function(...)
+    local ConnectionsToAdd = {...}
+    for i = 1, #ConnectionsToAdd do
+        Connections[#Connections + 1] = ConnectionsToAdd[i]
+    end
+    return ...
+end
+
+
+
+
+local function BuildGuiObjects()
+	local function New(ClassName, Name, Parent, Properties)
+		local Object = Instancenew(ClassName)
+		Object.Name = Name
+		for Property, Value in next, Properties or {} do
+			Object[Property] = Value
+		end
+		Object.Parent = Parent
+		return Object
+	end
+
+	local function Corner(Parent, Radius)
+		return New("UICorner", "UICorner", Parent, {
+			CornerRadius = UDimnew(0, Radius or 5)
+		})
+	end
+
+	local function Label(Name, Parent, Text, Size, Position, TextSize)
+		return New("TextLabel", Name, Parent, {
+			BackgroundTransparency = 1,
+			BorderSizePixel = 0,
+			Font = Enum.Font.Gotham,
+			Text = Text or "",
+			TextColor3 = Color3fromRGB(185, 185, 185),
+			TextSize = TextSize or 12,
+			TextTruncate = Enum.TextTruncate.AtEnd,
+			TextXAlignment = Enum.TextXAlignment.Left,
+			Size = Size,
+			Position = Position or UDim2new(),
+		})
+	end
+
+	local Objects = {
+		Load = {},
+		New = {},
+		Section = {},
+		Elements = { Dropdown = {} },
+	}
+
+
+	local Window = New("CanvasGroup", "Window", nil, {
+		BackgroundColor3 = Color3fromRGB(12, 12, 12),
+		BorderSizePixel = 0,
+		ClipsDescendants = false,
+		Size = UDim2new(0, 420, 0, 320),
+	})
+	Corner(Window, 6)
+
+	New("UIShadow", "UIShadow", Window, {
+		ZIndex = -1,
+		Color = Color3new(0, 0, 0),
+		Transparency = 0.7,
+		BlurRadius = UDimnew(0, 18),
+		Offset = UDim2new(0, 0, 0, 3),
+		Spread = UDim2.new(0, 0, 0, 0),
+	})
+
+	local Main = New("Frame", "Main", Window, {
+		BackgroundTransparency = 1,
+		Size = UDim2new(1, 0, 1, 0),
+	})
+	Label("Title", Main, "Window", UDim2new(1, -82, 0, 38), UDim2new(0, 18, 0, 0), 13).Font = Enum.Font.GothamMedium
+	New("ImageLabel", "Icon", Main, {
+		BackgroundTransparency = 1,
+		Image = "",
+		Position = UDim2new(0, 18, 0, 9),
+		ScaleType = Enum.ScaleType.Fit,
+		Size = UDim2new(0, 20, 0, 20),
+		Visible = false,
+	})
+	New("ImageButton", "Minimize", Main, {
+		AutoButtonColor = false,
+		BackgroundTransparency = 1,
+		Image = "rbxassetid://138553717371304",
+		ImageColor3 = Color3fromRGB(210, 210, 210),
+		Position = UDim2new(1, -62, 0, 10),
+		ScaleType = Enum.ScaleType.Fit,
+		Size = UDim2new(0, 20, 0, 20),
+	})
+	New("ImageButton", "CloseWindow", Main, {
+		AutoButtonColor = false,
+		BackgroundTransparency = 1,
+		Image = "rbxassetid://94500910650179",
+		ImageColor3 = Color3fromRGB(210, 210, 210),
+		Position = UDim2new(1, -34, 0, 10),
+		ScaleType = Enum.ScaleType.Fit,
+		Size = UDim2new(0, 20, 0, 20),
+	})
+	local ResizeHandle = New("TextButton", "ResizeHandle", Window, {
+		AnchorPoint = Vector2new(1, 1),
+		AutoButtonColor = false,
+		BackgroundTransparency = 1,
+		Position = UDim2new(1, -3, 1, -3),
+		Size = UDim2new(0, 20, 0, 20),
+		Text = "",
+		ZIndex = 10,
+	})
+	for Index = 1, 3 do
+		New("Frame", "Grip" .. Index, ResizeHandle, {
+			AnchorPoint = Vector2new(0.5, 0.5),
+			BackgroundColor3 = Color3fromRGB(105, 105, 105),
+			BorderSizePixel = 0,
+			Position = UDim2new(1, -(Index * 4), 1, -4),
+			Rotation = -45,
+			Size = UDim2new(0, 1, 0, 4 + (Index * 3)),
+			ZIndex = 11,
+		})
+	end
+
+	local Selection = New("ScrollingFrame", "Selection", Main, {
+		Active = true,
+		AutomaticCanvasSize = Enum.AutomaticSize.X,
+		BackgroundColor3 = Color3fromRGB(17, 17, 17),
+		BorderSizePixel = 0,
+		CanvasSize = UDim2new(),
+		Position = UDim2new(0, 10, 0, 40),
+		ScrollBarImageColor3 = Color3fromRGB(80, 80, 80),
+		ScrollBarThickness = 3,
+		ScrollingDirection = Enum.ScrollingDirection.X,
+		Size = UDim2new(1, -20, 0, 30),
+	})
+	Corner(Selection, 4)
+	New("UIListLayout", "UIListLayout", Selection, {
+		FillDirection = Enum.FillDirection.Horizontal,
+		HorizontalAlignment = Enum.HorizontalAlignment.Left,
+		Padding = UDimnew(0, 2),
+		SortOrder = Enum.SortOrder.LayoutOrder,
+	})
+
+	local PageContainer = New("Frame", "Container", Main, {
+		BackgroundTransparency = 1,
+		ClipsDescendants = true,
+		Position = UDim2new(0, 10, 0, 78),
+		Size = UDim2new(1, -20, 1, -88),
+	})
+	New("UIPageLayout", "UIPageLayout", PageContainer, {
+		Animated = true,
+		Circular = false,
+		EasingDirection = Enum.EasingDirection.Out,
+		EasingStyle = Enum.EasingStyle.Quad,
+		GamepadInputEnabled = false,
+		Padding = UDimnew(),
+		ScrollWheelInputEnabled = false,
+		TweenTime = 0.25,
+		TouchInputEnabled = false,
+	})
+
+
+	local Overlay = New("Frame", "Overlay", Main, {
+		BackgroundColor3 = Color3fromRGB(0, 0, 0),
+		BackgroundTransparency = 0.45,
+		BorderSizePixel = 0,
+		Size = UDim2new(1, 0, 1, 0),
+		Visible = false,
+		ZIndex = 20,
+	})
+	local OverlayMain = New("Frame", "Main", Overlay, {
+		AnchorPoint = Vector2new(0.5, 0.5),
+		BackgroundColor3 = Color3fromRGB(20, 20, 20),
+		BorderSizePixel = 0,
+		Position = UDim2new(0.5, 0, 0.5, 0),
+		Size = UDim2new(0, 300, 0, 220),
+		Visible = false,
+		ZIndex = 21,
+	})
+	Corner(OverlayMain, 6)
+	local Close = New("TextButton", "Close", OverlayMain, {
+		AutoButtonColor = false,
+		BackgroundTransparency = 1,
+		Font = Enum.Font.GothamBold,
+		Position = UDim2new(1, -30, 0, 4),
+		Size = UDim2new(0, 26, 0, 26),
+		Text = "×",
+		TextColor3 = Color3fromRGB(210, 210, 210),
+		TextSize = 21,
+		ZIndex = 22,
+	})
+
+	local Picker = New("Frame", "ColorPicker", OverlayMain, {
+		BackgroundTransparency = 1,
+		Position = UDim2new(0, 12, 0, 36),
+		Size = UDim2new(0, 172, 0, 172),
+		ZIndex = 22,
+	})
+	local Canvas = New("Frame", "ColorCanvas", Picker, {
+		BackgroundColor3 = Color3fromRGB(255, 0, 0),
+		BorderSizePixel = 0,
+		Size = UDim2new(1, 0, 0, 142),
+		ZIndex = 22,
+	})
+	Corner(Canvas, 4)
+	local ColorGradient = New("Frame", "ColorGradient", Canvas, {
+		BackgroundColor3 = Color3fromRGB(255, 255, 255),
+		BorderSizePixel = 0,
+		Size = UDim2new(1, 0, 1, 0),
+		ZIndex = 23,
+	})
+	Corner(ColorGradient, 4)
+	New("UIGradient", "UIGradient", ColorGradient, {
+		Color = ColorSequence.new(Color3fromRGB(255, 255, 255), Color3fromRGB(255, 0, 0)),
+	})
+	local DarkGradient = New("Frame", "DarkGradient", ColorGradient, {
+		BackgroundColor3 = Color3fromRGB(0, 0, 0),
+		BorderSizePixel = 0,
+		Size = UDim2new(1, 0, 1, 0),
+		ZIndex = 24,
+	})
+	Corner(DarkGradient, 4)
+	New("UIGradient", "UIGradient", DarkGradient, {
+		Rotation = 90,
+		Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 1),
+			NumberSequenceKeypoint.new(1, 0),
+		}),
+	})
+	local CanvasBar = New("Frame", "Bar", ColorGradient, {
+		AnchorPoint = Vector2new(0.5, 0.5),
+		BackgroundColor3 = Color3fromRGB(255, 255, 255),
+		BorderColor3 = Color3fromRGB(0, 0, 0),
+		Position = UDim2new(0, 2, 1, 2),
+		Size = UDim2new(0, 8, 0, 8),
+		ZIndex = 26,
+	})
+	Corner(CanvasBar, 8)
+	New("TextButton", "Hitbox", Canvas, {
+		AutoButtonColor = false,
+		BackgroundTransparency = 1,
+		Size = UDim2new(1, 0, 1, 0),
+		Text = "",
+		ZIndex = 27,
+	})
+
+	local HuePicker = New("Frame", "ColorSlider", Picker, {
+		BackgroundTransparency = 1,
+		Position = UDim2new(0, 0, 0, 150),
+		Size = UDim2new(1, 0, 0, 14),
+		ZIndex = 22,
+	})
+	local RainbowGradient = New("Frame", "RainbowGradient", HuePicker, {
+		BackgroundColor3 = Color3fromRGB(255, 0, 0),
+		BorderSizePixel = 0,
+		Size = UDim2new(1, 0, 1, 0),
+		ZIndex = 23,
+	})
+	Corner(RainbowGradient, 4)
+	New("UIGradient", "UIGradient", RainbowGradient, {
+		Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3fromRGB(255, 0, 0)),
+			ColorSequenceKeypoint.new(0.17, Color3fromRGB(255, 255, 0)),
+			ColorSequenceKeypoint.new(0.33, Color3fromRGB(0, 255, 0)),
+			ColorSequenceKeypoint.new(0.5, Color3fromRGB(0, 255, 255)),
+			ColorSequenceKeypoint.new(0.67, Color3fromRGB(0, 0, 255)),
+			ColorSequenceKeypoint.new(0.83, Color3fromRGB(255, 0, 255)),
+			ColorSequenceKeypoint.new(1, Color3fromRGB(255, 0, 0)),
+		}),
+	})
+	local SliderBar = New("Frame", "Bar", RainbowGradient, {
+		AnchorPoint = Vector2new(0.5, 0.5),
+		BackgroundColor3 = Color3fromRGB(255, 255, 255),
+		BorderColor3 = Color3fromRGB(0, 0, 0),
+		Position = UDim2new(0, 0, 0, 2),
+		Size = UDim2new(0, 8, 0, 8),
+		ZIndex = 25,
+	})
+	Corner(SliderBar, 8)
+	New("TextButton", "Hitbox", HuePicker, {
+		AutoButtonColor = false,
+		BackgroundTransparency = 1,
+		Size = UDim2new(1, 0, 1, 0),
+		Text = "",
+		ZIndex = 27,
+	})
+
+	local Settings = New("Frame", "Settings", OverlayMain, {
+		BackgroundTransparency = 1,
+		Position = UDim2new(0, 196, 0, 38),
+		Size = UDim2new(0, 92, 1, -50),
+		ZIndex = 22,
+	})
+	local Preview = New("Frame", "ColorPreview", Settings, {
+		BackgroundColor3 = Color3fromRGB(255, 255, 255),
+		BorderSizePixel = 0,
+		Size = UDim2new(1, 0, 0, 28),
+		ZIndex = 23,
+	})
+	Corner(Preview, 4)
+	local Options = New("Frame", "Options", Settings, {
+		BackgroundTransparency = 1,
+		Position = UDim2new(0, 0, 0, 37),
+		Size = UDim2new(1, 0, 1, -37),
+		ZIndex = 23,
+	})
+	local function ColorInput(Name, Order)
+		local Row = New("Frame", Name, Options, {
+			BackgroundTransparency = 1,
+			LayoutOrder = Order,
+			Position = UDim2new(0, 0, 0, (Order - 1) * 28),
+			Size = UDim2new(1, 0, 0, 22),
+			ZIndex = 24,
+		})
+		Label("Label", Row, Name, UDim2new(0, 35, 1, 0), nil, 11).ZIndex = 25
+		local Box = New("TextBox", "TextBox", Row, {
+			BackgroundColor3 = Color3fromRGB(28, 28, 28),
+			BorderSizePixel = 0,
+			ClearTextOnFocus = false,
+			Font = Enum.Font.Gotham,
+			PlaceholderColor3 = Color3fromRGB(170, 170, 170),
+			Position = UDim2new(0, 38, 0, 0),
+			Size = UDim2new(1, -38, 1, 0),
+			Text = "",
+			TextColor3 = Color3fromRGB(220, 220, 220),
+			TextSize = 11,
+			ZIndex = 25,
+		})
+		Corner(Box, 3)
+	end
+	ColorInput("Red", 1)
+	ColorInput("Green", 2)
+	ColorInput("Blue", 3)
+	local Rainbow = New("Frame", "Rainbow", Options, {
+		BackgroundTransparency = 1,
+		Position = UDim2new(0, 0, 0, 87),
+		Size = UDim2new(1, 0, 0, 22),
+		ZIndex = 24,
+	})
+	Label("Label", Rainbow, "Rainbow", UDim2new(1, -38, 1, 0), nil, 11).ZIndex = 25
+	local RainbowContainer = New("Frame", "Container", Rainbow, {
+		BackgroundColor3 = Color3fromRGB(25, 25, 25),
+		BorderSizePixel = 0,
+		Position = UDim2new(1, -34, 0, 2),
+		Size = UDim2new(0, 34, 0, 18),
+		ZIndex = 25,
+	})
+	Corner(RainbowContainer, 9)
+	local RainbowSwitch = New("Frame", "Switch", RainbowContainer, {
+		BackgroundColor3 = Color3fromRGB(230, 230, 230),
+		BorderSizePixel = 0,
+		Position = UDim2new(0, 2, 0, 2),
+		Size = UDim2new(0, 14, 0, 14),
+		ZIndex = 26,
+	})
+	Corner(RainbowSwitch, 7)
+	New("TextButton", "Hitbox", RainbowContainer, {
+		AutoButtonColor = false,
+		BackgroundTransparency = 1,
+		Size = UDim2new(1, 0, 1, 0),
+		Text = "",
+		ZIndex = 27,
+	})
+	Objects.Load.Window = Window
+
+	local Page = New("Frame", "Page", nil, {
+		BackgroundTransparency = 1,
+		Size = UDim2new(1, 0, 1, 0),
+	})
+	local PageSelection = New("ScrollingFrame", "Selection", Page, {
+		Active = true,
+		AutomaticCanvasSize = Enum.AutomaticSize.X,
+		BackgroundTransparency = 1,
+		BorderSizePixel = 0,
+		CanvasSize = UDim2new(),
+		ScrollBarImageColor3 = Color3fromRGB(80, 80, 80),
+		ScrollBarThickness = 3,
+		ScrollingDirection = Enum.ScrollingDirection.X,
+		Size = UDim2new(1, 0, 1, 0),
+	})
+	New("UIListLayout", "UIListLayout", PageSelection, {
+		FillDirection = Enum.FillDirection.Horizontal,
+		Padding = UDimnew(0, 10),
+		SortOrder = Enum.SortOrder.LayoutOrder,
+	})
+	Objects.New.Page = Page
+	local Tab = New("TextButton", "TextButton", nil, {
+		AutoButtonColor = false,
+		BackgroundColor3 = Color3fromRGB(18, 18, 18),
+		BorderSizePixel = 0,
+		Font = Enum.Font.Gotham,
+		Size = UDim2new(0, 96, 1, 0),
+		Text = "",
+		TextColor3 = Color3fromRGB(150, 150, 150),
+		TextSize = 12,
+	})
+	Corner(Tab, 4)
+	New("ImageLabel", "Icon", Tab, {
+		BackgroundTransparency = 1,
+		Image = "",
+		ImageColor3 = Color3fromRGB(150, 150, 150),
+		Position = UDim2new(0, 9, 0.5, -7),
+		ScaleType = Enum.ScaleType.Fit,
+		Size = UDim2new(0, 14, 0, 14),
+		Visible = false,
+		ZIndex = 2,
+	})
+	New("TextLabel", "Title", Tab, {
+		BackgroundTransparency = 1,
+		Position = UDim2new(),
+		Size = UDim2new(1, 0, 1, 0),
+		Font = Enum.Font.Gotham,
+		Text = "Page",
+		TextColor3 = Color3fromRGB(150, 150, 150),
+		TextSize = 12,
+		TextTruncate = Enum.TextTruncate.AtEnd,
+		TextXAlignment = Enum.TextXAlignment.Center,
+		ZIndex = 2,
+	})
+	Objects.New.TextButton = Tab
+
+	local Section = New("Frame", "Container", nil, {
+		BackgroundColor3 = Color3fromRGB(20, 20, 20),
+		BorderSizePixel = 0,
+		Size = UDim2new(0, 200, 1, 0),
+	})
+	Corner(Section, 5)
+	local SectionTitle = Label("Title", Section, "Section", UDim2new(1, -12, 0, 26), UDim2new(0, 7, 0, 1), 12)
+	SectionTitle.TextXAlignment = Enum.TextXAlignment.Center
+	local SectionOptions = New("ScrollingFrame", "Options", Section, {
+		Active = true,
+		AutomaticCanvasSize = Enum.AutomaticSize.None,
+		BackgroundTransparency = 1,
+		BorderSizePixel = 0,
+		CanvasSize = UDim2new(),
+		Position = UDim2new(0, 7, 0, 28),
+		ScrollBarImageColor3 = Color3fromRGB(80, 80, 80),
+		ScrollBarThickness = 3,
+		Size = UDim2new(1, -14, 1, -35),
+		ZIndex = 2,
+	})
+	New("UIListLayout", "UIListLayout", SectionOptions, {
+		Padding = UDimnew(0, 6),
+		SortOrder = Enum.SortOrder.LayoutOrder,
+	})
+	Objects.Section.Container = Section
+
+	local Toggle = New("Frame", "Toggle", nil, {
+		BackgroundColor3 = Color3fromRGB(25, 25, 25),
+		BorderSizePixel = 0,
+		Size = UDim2new(1, 0, 0, 34),
+	})
+	Corner(Toggle, 4)
+	Label("Title", Toggle, "Toggle", UDim2new(1, -56, 1, 0), UDim2new(0, 9, 0, 0), 12)
+	local ToggleContainer = New("Frame", "Container", Toggle, {
+		BackgroundColor3 = Color3fromRGB(25, 25, 25),
+		BorderSizePixel = 0,
+		Position = UDim2new(1, -42, 0.5, -9),
+		Size = UDim2new(0, 34, 0, 18),
+	})
+	Corner(ToggleContainer, 9)
+	local ToggleSwitch = New("Frame", "Switch", ToggleContainer, {
+		BackgroundColor3 = Color3fromRGB(235, 235, 235),
+		BorderSizePixel = 0,
+		Position = UDim2new(0, 2, 0, 2),
+		Size = UDim2new(0, 14, 0, 14),
+	})
+	Corner(ToggleSwitch, 7)
+	New("TextButton", "Hitbox", ToggleContainer, {
+		AutoButtonColor = false,
+		BackgroundTransparency = 1,
+		Size = UDim2new(1, 0, 1, 0),
+		Text = "",
+	})
+	Objects.Elements.Toggle = Toggle
+
+	local Slider = New("Frame", "Slider", nil, {
+		BackgroundColor3 = Color3fromRGB(25, 25, 25),
+		BorderSizePixel = 0,
+		Size = UDim2new(1, 0, 0, 57),
+	})
+	Corner(Slider, 4)
+	Label("Title", Slider, "Slider", UDim2new(1, -16, 0, 22), UDim2new(0, 8, 0, 2), 12)
+	local SliderContainer = New("Frame", "Container", Slider, {
+		BackgroundTransparency = 1,
+		Position = UDim2new(0, 0, 0, 21),
+		Size = UDim2new(1, 0, 0, 36),
+	})
+	local SliderBar = New("Frame", "SliderBar", SliderContainer, {
+		BackgroundTransparency = 1,
+		Position = UDim2new(0, 8, 0, 4),
+		Size = UDim2new(1, -16, 0, 12),
+	})
+	local BarFrame = New("Frame", "BarFrame", SliderBar, {
+		BackgroundColor3 = Color3fromRGB(17, 17, 17),
+		BorderSizePixel = 0,
+		Position = UDim2new(0, 0, 0, 3),
+		Size = UDim2new(1, 0, 0, 6),
+	})
+	Corner(BarFrame, 3)
+	local Bar = New("Frame", "Bar", BarFrame, {
+		BackgroundColor3 = Color3fromRGB(255, 75, 85),
+		BorderSizePixel = 0,
+		Size = UDim2new(0, 0, 1, 0),
+	})
+	Corner(Bar, 3)
+	local ValueLabel = Label("Label", Bar, "0", UDim2new(0, 38, 0, 18), UDim2new(1, -19, 0.5, -9), 11)
+	ValueLabel.AnchorPoint = Vector2new(0.5, 0.5)
+	ValueLabel.BackgroundColor3 = Color3fromRGB(16, 16, 16)
+	ValueLabel.BackgroundTransparency = 1
+	ValueLabel.TextTransparency = 1
+	ValueLabel.TextXAlignment = Enum.TextXAlignment.Center
+	Corner(ValueLabel, 3)
+	Label("Min", SliderContainer, "0", UDim2new(0, 35, 0, 14), UDim2new(0, 8, 0, 20), 10)
+	local Max = Label("Max", SliderContainer, "100", UDim2new(0, 35, 0, 14), UDim2new(1, -43, 0, 20), 10)
+	Max.TextXAlignment = Enum.TextXAlignment.Right
+	New("TextButton", "Hitbox", SliderContainer, {
+		AutoButtonColor = false,
+		BackgroundTransparency = 1,
+		Position = UDim2new(0, 8, 0, 0),
+		Size = UDim2new(1, -16, 0, 20),
+		Text = "",
+	})
+	Objects.Elements.Slider = Slider
+
+	local SelectColor = New("Frame", "SelectColor", nil, {
+		BackgroundColor3 = Color3fromRGB(25, 25, 25),
+		BorderSizePixel = 0,
+		Size = UDim2new(1, 0, 0, 34),
+	})
+	Corner(SelectColor, 4)
+	Label("Title", SelectColor, "Colour", UDim2new(1, -56, 1, 0), UDim2new(0, 9, 0, 0), 12)
+	local ColorButton = New("TextButton", "Button", SelectColor, {
+		AutoButtonColor = false,
+		BackgroundColor3 = Color3fromRGB(255, 255, 255),
+		BorderSizePixel = 0,
+		Position = UDim2new(1, -42, 0.5, -10),
+		Size = UDim2new(0, 34, 0, 20),
+		Text = "",
+	})
+	Corner(ColorButton, 4)
+	Objects.Elements.SelectColor = SelectColor
+
+	local DropdownElement = New("Frame", "DropdownElement", nil, {
+		BackgroundColor3 = Color3fromRGB(25, 25, 25),
+		BorderSizePixel = 0,
+		Size = UDim2new(1, 0, 0, 34),
+	})
+	Corner(DropdownElement, 4)
+	local DropdownTitle = Label("Title", DropdownElement, "Dropdown", UDim2new(1, -54, 1, 0), UDim2new(0, 9, 0, 0), 12)
+	DropdownTitle.ZIndex = 2
+	local DropdownButton = New("TextButton", "Button", DropdownElement, {
+		AutoButtonColor = false,
+		BackgroundTransparency = 1,
+		Font = Enum.Font.GothamBold,
+		Position = UDim2new(),
+		Size = UDim2new(1, 0, 1, 0),
+		Text = "",
+		TextColor3 = Color3fromRGB(190, 190, 190),
+		TextSize = 18,
+		TextXAlignment = Enum.TextXAlignment.Right,
+		ZIndex = 1,
+	})
+	New("ImageLabel", "Icon", DropdownButton, {
+		BackgroundTransparency = 1,
+		Image = "rbxassetid://79989012784176",
+		ImageColor3 = Color3fromRGB(190, 190, 190),
+		Position = UDim2new(1, -31, 0.5, -9),
+		ScaleType = Enum.ScaleType.Fit,
+		Size = UDim2new(0, 18, 0, 18),
+		ZIndex = 3,
+	})
+	Objects.Elements.Dropdown.DropdownElement = DropdownElement
+
+	local DropdownSelection = New("Frame", "DropdownSelection", nil, {
+		BackgroundTransparency = 1,
+		ClipsDescendants = true,
+		Size = UDim2new(1, -10, 0, 0),
+	})
+	local DropdownFrame = New("Frame", "Frame", DropdownSelection, {
+		BackgroundColor3 = Color3fromRGB(20, 20, 20),
+		BorderSizePixel = 0,
+		Size = UDim2new(1, 0, 1, 0),
+	})
+	Corner(DropdownFrame, 4)
+	local DropdownOptions = New("ScrollingFrame", "Container", DropdownFrame, {
+		Active = true,
+		AutomaticCanvasSize = Enum.AutomaticSize.None,
+		BackgroundTransparency = 1,
+		BorderSizePixel = 0,
+		CanvasSize = UDim2new(),
+		Position = UDim2new(0, 5, 0, 4),
+		ScrollBarImageColor3 = Color3fromRGB(80, 80, 80),
+		ScrollBarThickness = 2,
+		Size = UDim2new(1, -10, 1, -8),
+	})
+	New("UIListLayout", "UIListLayout", DropdownOptions, {
+		Padding = UDimnew(0, 5),
+		SortOrder = Enum.SortOrder.LayoutOrder,
+	})
+	Objects.Elements.Dropdown.DropdownSelection = DropdownSelection
+	local DropdownOption = New("TextButton", "TextButton", nil, {
+		AutoButtonColor = false,
+		BackgroundColor3 = Color3fromRGB(28, 28, 28),
+		BorderSizePixel = 0,
+		Font = Enum.Font.Gotham,
+		Size = UDim2new(1, 0, 0, 24),
+		Text = "Option",
+		TextColor3 = Color3fromRGB(185, 185, 185),
+		TextSize = 11,
+	})
+	Corner(DropdownOption, 3)
+	Objects.Elements.Dropdown.TextButton = DropdownOption
+
+	return Objects
+end
+
+local GuiObjects = BuildGuiObjects()
+
+local Colors = {
+	PageTextPressed = Color3fromRGB(200, 200, 200);
+	PageBackgroundPressed = Color3fromRGB(15, 15, 15);
+	PageBorderPressed = Color3fromRGB(20, 20, 20);
+	PageTextHover = Color3fromRGB(175, 175, 175);
+	PageBackgroundHover = Color3fromRGB(16, 16, 16);
+	PageBorderHover = Color3fromRGB(20, 20, 20);
+	PageTextIdle = Color3fromRGB(150, 150, 150);
+	PageBackgroundIdle = Color3fromRGB(18, 18, 18);
+	PageBorderIdle = Color3fromRGB(18, 18, 18);
+	ElementBackground = Color3fromRGB(25, 25, 25);
+}
+
+local Debounce = function(Func)
+	local Debounce_ = false
+	return function(...)
+		if (not Debounce_) then
+			Debounce_ = true
+			Func(...);
+			Debounce_ = false
+		end
+	end
+end
+
+
+local Utils = {}
+
+Utils.SmoothScroll = function(content, SmoothingFactor)
+	content.ScrollingEnabled = false
+
+	local input = Clone(content);
+
+	input.ClearAllChildren(input);
+	input.BackgroundTransparency = 1
+	input.ScrollBarImageTransparency = 1
+	input.ZIndex = content.ZIndex + 1
+	input.Name = "_smoothinputframe"
+	input.ScrollingEnabled = true
+	input.Parent = content.Parent
+
+	local function syncProperty(prop)
+        AddConnection(CConnect(GetPropertyChangedSignal(content, prop), function()
+			if prop == "ZIndex" then
+				input[prop] = content[prop] + 1
+			else
+				input[prop] = content[prop]
+			end
+		end));
+	end
+
+	syncProperty "CanvasSize"
+	syncProperty "Position"
+	syncProperty "Rotation"
+	syncProperty "ScrollingDirection"
+	syncProperty "ScrollBarThickness"
+	syncProperty "BorderSizePixel"
+	syncProperty "ElasticBehavior"
+	syncProperty "SizeConstraint"
+	syncProperty "ZIndex"
+	syncProperty "BorderColor3"
+	syncProperty "Size"
+	syncProperty "AnchorPoint"
+	syncProperty "Visible"
+
+	local smoothConnection = AddConnection(CConnect(Services.RunService.RenderStepped, function()
+		local a = content.CanvasPosition
+		local b = input.CanvasPosition
+		local c = SmoothingFactor
+		local d = (b - a) * c + a
+
+		content.CanvasPosition = d
+	end));
+
+	AddConnection(CConnect(content.AncestryChanged, function()
+		if content.Parent == nil then
+			Destroy(input);
+			Disconnect(smoothConnection);
+		end
+	end));
+end
+
+do
+    local TweenService = Services.TweenService
+    Utils.Tween = function(Object, Style, Direction, Time, Goal)
+        local TInfo = TweenInfo.new(Time, Enum.EasingStyle[Style], Enum.EasingDirection[Direction])
+        local Tween = TweenService.Create(TweenService, Object, TInfo, Goal)
+        Tween.Play(Tween);
+        return Tween
+    end
+end
+
+Utils.MultColor3 = function(Color, Delta)
+	return Color3new(clamp(Color.R * Delta, 0, 1), clamp(Color.G * Delta, 0, 1), clamp(Color.B * Delta, 0, 1))
+end
+
+Utils.Draggable = function(UI, DragUi)
+	local DragSpeed = 0
+	local StartPos
+	local DragToggle, DragInput, DragStart
+
+	if not DragUi then
+		DragUi = UI
+	end
+
+	local function UpdateInput(Input)
+		local Delta = Input.Position - DragStart
+		local Position = UDim2.new(StartPos.X.Scale, StartPos.X.Offset + Delta.X, StartPos.Y.Scale, StartPos.Y.Offset + Delta.Y);
+
+		Utils.Tween(UI, "Linear", "Out", .25, {
+			Position = Position
+		});
+	end
+    local CoreGui = Services.CoreGui
+    local UserInputService = Services.UserInputService
+
+	AddConnection(CConnect(UI.InputBegan, function(Input)
+		if ((Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch) and not UserInputService.GetFocusedTextBox(UserInputService)) then
+			local Objects = CoreGui.GetGuiObjectsAtPosition(CoreGui, Input.Position.X, Input.Position.Y)
+			for Index = 1, #Objects do
+				if Objects[Index].Name == "ResizeHandle" or Objects[Index]:FindFirstAncestor("ResizeHandle") then
+					return
+				end
+			end
+
+			DragToggle = true
+			DragStart = Input.Position
+			StartPos = UI.Position
+
+			AddConnection(CConnect(Input.Changed, function()
+				if (Input.UserInputState == Enum.UserInputState.End) then
+					DragToggle = false
+				end
+			end));
+		end
+	end));
+
+	AddConnection(CConnect(UI.InputChanged, function(Input)
+		if (Input.UserInputType == Enum.UserInputType.MouseMovement or Input.UserInputType == Enum.UserInputType.Touch) then
+			DragInput = Input
+		end
+	end));
+
+	AddConnection(CConnect(UserInputService.InputChanged, function(Input)
+		if (Input == DragInput and DragToggle) then
+			UpdateInput(Input);
+		end
+	end));
+end
+
+Utils.Resizable = function(Window, Handle, MinimumSize, OnResize)
+	local UserInputService = Services.UserInputService
+	local Resizing = false
+	local ResizeStart
+	local StartSize
+
+	local function UpdateSize(Input)
+		local Delta = Input.Position - ResizeStart
+		local Width = math.max(MinimumSize.X, StartSize.X + Delta.X)
+		local Height = math.max(MinimumSize.Y, StartSize.Y + Delta.Y)
+		local NewSize = UDim2.fromOffset(Width, Height)
+
+		Window.Size = NewSize
+		if OnResize then
+			OnResize(NewSize)
+		end
+	end
+
+	AddConnection(CConnect(Handle.InputBegan, function(Input)
+		if (Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch) then
+			Resizing = true
+			ResizeStart = Input.Position
+			StartSize = Window.AbsoluteSize
+		end
+	end))
+
+	AddConnection(CConnect(UserInputService.InputChanged, function(Input)
+		if Resizing and (Input.UserInputType == Enum.UserInputType.MouseMovement or Input.UserInputType == Enum.UserInputType.Touch) then
+			UpdateSize(Input)
+		end
+	end))
+
+	AddConnection(CConnect(UserInputService.InputEnded, function(Input)
+		if Resizing and (Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch) then
+			Resizing = false
+		end
+	end))
+end
+
+Utils.Click = function(Object, Goal)
+	local Hover = {
+		[Goal] = Utils.MultColor3(Object[Goal], 0.9);
+	}
+
+	local Press = {
+		[Goal] = Utils.MultColor3(Object[Goal], 1.2);
+	}
+
+	local Origin = {
+		[Goal] = Object[Goal]
+	}
+
+	AddConnection(CConnect(Object.MouseEnter, function()
+		Utils.Tween(Object, "Quad", "Out", .25, Hover);
+	end))
+
+	AddConnection(CConnect(Object.MouseLeave, function()
+		Utils.Tween(Object, "Quad", "Out", .25, Origin);
+	end));
+
+	AddConnection(CConnect(Object.MouseButton1Down, function()
+		Utils.Tween(Object, "Quad", "Out", .3, Press);
+	end));
+
+    AddConnection(CConnect(Object.MouseButton1Up, function()
+		Utils.Tween(Object, "Quad", "Out", .4, Hover);
+	end));
+end
+
+Utils.Hover = function(Object, Goal)
+	local Hover = {
+		[Goal] = Utils.MultColor3(Object[Goal], 0.9);
+	}
+
+	local Origin = {
+		[Goal] = Object[Goal]
+	}
+
+	AddConnection(CConnect(Object.MouseEnter, function()
+		Utils.Tween(Object, "Sine", "Out", .5, Hover);
+	end));
+
+	AddConnection(CConnect(Object.MouseLeave, function()
+		Utils.Tween(Object, "Sine", "Out", .5, Origin);
+	end));
+end
+
+Utils.Blink = function(Object, Goal, Color1, Color2, Time)
+	local Normal = {
+		[Goal] = Color1
+	}
+
+	local Blink = {
+		[Goal] = Color2
+	}
+
+	CThread(function()
+		local T1 = Utils.Tween(Object, "Quad", "Out", Time, Blink).Completed
+        T1.Wait(T1);
+        local T2 = Utils.Tween(Object, "Quad", "Out", Time, Normal);
+	end)()
+end
+
+Utils.TweenTrans = function(Object, Transparency)
+	local Properties = {
+		TextBox = "TextTransparency",
+		TextLabel = "TextTransparency",
+		TextButton = "TextTransparency",
+		ImageButton = "ImageTransparency",
+		ImageLabel = "ImageTransparency"
+	}
+
+    local Descendants = GetDescendants(Object);
+	for i = 1, #Descendants do
+        local Instance_ = Descendants[i]
+		if (IsA(Instance_, "GuiObject")) then
+			for Class, Property in next, Properties do
+				if (IsA(Instance_, Class) and Instance_[Property] ~= 1) then
+					Utils.Tween(Instance_, "Quad", "Out", .5, {
+						[Property] = Transparency
+					});
+					break
+				end
+			end
+			if Instance_.Name == "Overlay" and Transparency == 0 then
+				Utils.Tween(Object, "Quad", "Out", .5, {
+					BackgroundTransparency = .5
+				});
+			elseif (Instance_.BackgroundTransparency ~= 1) then
+				Utils.Tween(Instance_, "Quad", "Out", .5, {
+					BackgroundTransparency = Transparency
+				});
+			end
+		end
+	end
+
+	return Utils.Tween(Object, "Quad", "Out", .5, {
+		BackgroundTransparency = Transparency
+	});
+end
+
+Utils.Intro = function(Object)
+	local Frame = Instancenew("Frame")
+	local UICorner = Instancenew("UICorner")
+	local CornerRadius = Object:FindFirstChild("UICorner") and Object.UICorner.CornerRadius or UDim.new(0, 0)
+
+	Frame.Name = "IntroFrame"
+	Frame.ZIndex = 1000
+	Frame.Size = UDim2.fromOffset(Object.AbsoluteSize.X, Object.AbsoluteSize.Y)
+	Frame.AnchorPoint = Vector2.new(.5, .5)
+	Frame.Position = UDim2.new(Object.Position.X.Scale, Object.Position.X.Offset + (Object.AbsoluteSize.X / 2), Object.Position.Y.Scale, Object.Position.Y.Offset + (Object.AbsoluteSize.Y / 2))
+	Frame.BackgroundColor3 = Object.BackgroundColor3
+	Frame.BorderSizePixel = 0
+
+	UICorner.CornerRadius = CornerRadius
+	UICorner.Parent = Frame
+
+	Frame.Parent = Object.Parent
+
+	if (Object.Visible) then
+		Frame.BackgroundTransparency = 1
+
+		local Tween = Utils.Tween(Frame, "Quad", "Out", .25, {
+			BackgroundTransparency = 0
+		});
+
+        CWait(Tween.Completed);
+		Object.Visible = false
+
+		local Tween = Utils.Tween(Frame, "Quad", "Out", .25, {
+			Size = UDim2.fromOffset(0, 0);
+		});
+
+		Utils.Tween(UICorner, "Quad", "Out", .25, {
+			CornerRadius = UDimnew(1, 0);
+		});
+
+		CWait(Tween.Completed);
+		Destroy(Frame);
+	else
+		Frame.Visible = true
+		Frame.Size = UDim2.fromOffset(0, 0)
+		UICorner.CornerRadius = UDimnew(1, 0)
+
+		local Tween = Utils.Tween(Frame, "Quad", "Out", .25, {
+			Size = UDim2.fromOffset(Object.AbsoluteSize.X, Object.AbsoluteSize.Y);
+		});
+
+		Utils.Tween(UICorner, "Quad", "Out", .25, {
+			CornerRadius = CornerRadius
+		});
+
+		CWait(Tween.Completed);
+		Object.Visible = true
+
+		local Tween = Utils.Tween(Frame, "Quad", "Out", .25, {
+			BackgroundTransparency = 1
+		});
+
+		CWait(Tween.Completed);
+		Destroy(Frame);
+	end
+end
+
+Utils.MakeGradient = function(ColorTable)
+	local Table = {}
+    local ColorSequenceKeypointNew = ColorSequenceKeypoint.new
+	for Time, Color in next, ColorTable do
+		Table[#Table + 1] = ColorSequenceKeypointNew(Time - 1, Color);
+	end
+	return ColorSequence.new(Table)
+end
+
+local UILibrary = {}
+UILibrary.__index = UILibrary
+
+UILibrary.new = function(ColorTheme)
+	assert(typeof(ColorTheme) == "Color3", "[UI] ColorTheme must be a Color3.");
+	local NewUI = {}
+	local UI = Instancenew("ScreenGui");
+	UI.Name = "NativeUILibrary"
+	UI.IgnoreGuiInset = true
+	UI.ResetOnSpawn = false
+	UI.ZIndexBehavior = Enum.ZIndexBehavior.Global
+
+	local NotificationHolder = Instancenew("Frame")
+	NotificationHolder.Name = "Notifications"
+	NotificationHolder.AnchorPoint = Vector2new(1, 0)
+	NotificationHolder.BackgroundTransparency = 1
+	NotificationHolder.Position = UDim2new(1, -16, 0, 16)
+	NotificationHolder.Size = UDim2new(0, 280, 1, -32)
+	NotificationHolder.ZIndex = 100
+	NotificationHolder.Parent = UI
+
+	local NotificationLayout = Instancenew("UIListLayout")
+	NotificationLayout.FillDirection = Enum.FillDirection.Vertical
+	NotificationLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
+	NotificationLayout.Padding = UDimnew(0, 8)
+	NotificationLayout.SortOrder = Enum.SortOrder.LayoutOrder
+	NotificationLayout.VerticalAlignment = Enum.VerticalAlignment.Top
+	NotificationLayout.Parent = NotificationHolder
+
+	setmetatable(NewUI, UILibrary);
+	NewUI.UI = UI
+	NewUI.ColorTheme = ColorTheme
+	NewUI.NotificationHolder = NotificationHolder
+
+	return NewUI
+end
+
+function UILibrary:Notify(Title, Description, Duration, Icon, TextColor, DurationColor)
+	local DescriptionColor
+	local HasCustomTextColor = typeof(TextColor) == "Color3"
+	if typeof(Title) == "table" then
+		local Args = Title
+		Title = Args.Title or Args.Name or "Notification"
+		Description = Args.Description or Args.Content or Args.Text or ""
+		Duration = Args.Duration or Args.Time
+		Icon = Args.Icon or Args.Image
+		TextColor = Args.TextColor or Args.Color
+		DescriptionColor = Args.DescriptionColor
+		DurationColor = Args.DurationColor or Args.LineColor or Args.TimerColor
+		HasCustomTextColor = typeof(TextColor) == "Color3"
+	end
+
+	Title = tostring(Title or "Notification")
+	Description = tostring(Description or "")
+	Duration = math.max(tonumber(Duration) or 4, 0.1)
+	TextColor = typeof(TextColor) == "Color3" and TextColor or Color3fromRGB(235, 235, 235)
+	DescriptionColor = typeof(DescriptionColor) == "Color3" and DescriptionColor or (HasCustomTextColor and TextColor or Color3fromRGB(165, 165, 165))
+	DurationColor = typeof(DurationColor) == "Color3" and DurationColor or self.ColorTheme
+
+	local IconImage = ""
+	if Icon ~= nil and Icon ~= "" then
+		IconImage = tostring(Icon)
+		if not Sfind(IconImage, "://", 1, true) then
+			IconImage = "rbxassetid://" .. IconImage
+		end
+	end
+
+	local HasIcon = IconImage ~= ""
+	local Notification = Instancenew("Frame")
+	Notification.Name = "Notification"
+	Notification.BackgroundColor3 = Color3fromRGB(18, 18, 18)
+	Notification.BackgroundTransparency = 1
+	Notification.BorderSizePixel = 0
+	Notification.Size = UDim2new(1, 0, 0, 58)
+	Notification.ZIndex = 100
+
+	local function CreateDurationLine(Name, Position, AnchorPoint)
+		local Line = Instancenew("Frame")
+		Line.Name = Name
+		Line.AnchorPoint = AnchorPoint
+		Line.BackgroundColor3 = DurationColor
+		Line.BackgroundTransparency = 1
+		Line.BorderSizePixel = 0
+		Line.Position = Position
+		Line.ZIndex = 102
+		Line.Parent = Notification
+		return Line
+	end
+
+	local TopLine = CreateDurationLine("DurationTop", UDim2new(), Vector2new())
+	TopLine.Size = UDim2new(0, 0, 0, 3)
+	local RightLine = CreateDurationLine("DurationRight", UDim2new(1, -3, 0, 0), Vector2new())
+	RightLine.Size = UDim2new(0, 3, 0, 0)
+	local BottomLine = CreateDurationLine("DurationBottom", UDim2new(1, 0, 1, -3), Vector2new(1, 0))
+	BottomLine.Size = UDim2new(0, 0, 0, 3)
+	local LeftLine = CreateDurationLine("DurationLeft", UDim2new(0, 0, 1, 0), Vector2new(0, 1))
+	LeftLine.Size = UDim2new(0, 3, 0, 0)
+	local DurationLines = { TopLine, RightLine, BottomLine, LeftLine }
+
+	local NotificationIcon = Instancenew("ImageLabel")
+	NotificationIcon.Name = "Icon"
+	NotificationIcon.BackgroundTransparency = 1
+	NotificationIcon.Image = IconImage
+	NotificationIcon.ImageColor3 = TextColor
+	NotificationIcon.ImageTransparency = 1
+	NotificationIcon.Position = UDim2new(0, 18, 0, 16)
+	NotificationIcon.ScaleType = Enum.ScaleType.Fit
+	NotificationIcon.Size = UDim2new(0, 26, 0, 26)
+	NotificationIcon.Visible = HasIcon
+	NotificationIcon.ZIndex = 101
+	NotificationIcon.Parent = Notification
+
+	local TextPosition = HasIcon and UDim2new(0, 56, 0, 8) or UDim2new(0, 18, 0, 8)
+	local TextWidth = HasIcon and -70 or -30
+	local NotificationTitle = Instancenew("TextLabel")
+	NotificationTitle.Name = "Title"
+	NotificationTitle.BackgroundTransparency = 1
+	NotificationTitle.Position = TextPosition
+	NotificationTitle.Size = UDim2new(1, TextWidth, 0, 17)
+	NotificationTitle.Font = Enum.Font.GothamMedium
+	NotificationTitle.Text = Title
+	NotificationTitle.TextColor3 = TextColor
+	NotificationTitle.TextSize = 13
+	NotificationTitle.TextTransparency = 1
+	NotificationTitle.TextTruncate = Enum.TextTruncate.AtEnd
+	NotificationTitle.TextXAlignment = Enum.TextXAlignment.Left
+	NotificationTitle.ZIndex = 101
+	NotificationTitle.Parent = Notification
+
+	local NotificationDescription = Instancenew("TextLabel")
+	NotificationDescription.Name = "Description"
+	NotificationDescription.BackgroundTransparency = 1
+	NotificationDescription.Position = UDim2new(TextPosition.X.Scale, TextPosition.X.Offset, 0, 27)
+	NotificationDescription.Size = UDim2new(1, TextWidth, 0, 16)
+	NotificationDescription.Font = Enum.Font.Gotham
+	NotificationDescription.Text = Description
+	NotificationDescription.TextColor3 = DescriptionColor
+	NotificationDescription.TextSize = 11
+	NotificationDescription.TextTransparency = 1
+	NotificationDescription.TextTruncate = Enum.TextTruncate.AtEnd
+	NotificationDescription.TextXAlignment = Enum.TextXAlignment.Left
+	NotificationDescription.ZIndex = 101
+	NotificationDescription.Parent = Notification
+
+	Notification.Parent = self.NotificationHolder
+
+	Utils.Tween(Notification, "Quad", "Out", .18, { BackgroundTransparency = 0 })
+	Utils.Tween(NotificationTitle, "Quad", "Out", .18, { TextTransparency = 0 })
+	Utils.Tween(NotificationDescription, "Quad", "Out", .18, { TextTransparency = 0 })
+	if HasIcon then
+		Utils.Tween(NotificationIcon, "Quad", "Out", .18, { ImageTransparency = 0 })
+	end
+
+	local Perimeter = (280 * 2) + (58 * 2)
+	task.spawn(function()
+		local TopTween = Utils.Tween(TopLine, "Linear", "Out", Duration * (280 / Perimeter), { Size = UDim2new(1, 0, 0, 3), BackgroundTransparency = 0 })
+		CWait(TopTween.Completed)
+		local RightTween = Utils.Tween(RightLine, "Linear", "Out", Duration * (58 / Perimeter), { Size = UDim2new(0, 3, 1, 0), BackgroundTransparency = 0 })
+		CWait(RightTween.Completed)
+		local BottomTween = Utils.Tween(BottomLine, "Linear", "Out", Duration * (280 / Perimeter), { Size = UDim2new(1, 0, 0, 3), BackgroundTransparency = 0 })
+		CWait(BottomTween.Completed)
+		Utils.Tween(LeftLine, "Linear", "Out", Duration * (58 / Perimeter), { Size = UDim2new(0, 3, 1, 0), BackgroundTransparency = 0 })
+	end)
+
+	task.delay(Duration, function()
+		if Notification.Parent == nil then
+			return
+		end
+
+		local FadeOut = Utils.Tween(Notification, "Quad", "Out", .2, { BackgroundTransparency = 1 })
+		Utils.Tween(NotificationTitle, "Quad", "Out", .2, { TextTransparency = 1 })
+		Utils.Tween(NotificationDescription, "Quad", "Out", .2, { TextTransparency = 1 })
+		for Index = 1, #DurationLines do
+			Utils.Tween(DurationLines[Index], "Quad", "Out", .2, { BackgroundTransparency = 1 })
+		end
+		if HasIcon then
+			Utils.Tween(NotificationIcon, "Quad", "Out", .2, { ImageTransparency = 1 })
+		end
+
+		CWait(FadeOut.Completed)
+		if Notification.Parent ~= nil then
+			Destroy(Notification)
+		end
+	end)
+
+	return Notification
+end
+
+function UILibrary:LoadWindow(Title, Size, Icon)
+	local Window = Clone(GuiObjects.Load.Window);
+	local Main = Window.Main
+	local TitleLabel = Main.Title
+	local WindowIcon = Main.Icon
+	local Overlay = Main.Overlay
+	local OverlayMain = Overlay.Main
+	local ColorPicker = OverlayMain.ColorPicker
+	local Settings = OverlayMain.Settings
+	local ClosePicker = OverlayMain.Close
+	local ColorCanvas = ColorPicker.ColorCanvas
+	local ColorSlider = ColorPicker.ColorSlider
+	local ColorGradient = ColorCanvas.ColorGradient
+	local DarkGradient = ColorGradient.DarkGradient
+	local CanvasBar = ColorGradient.Bar
+	local RainbowGradient = ColorSlider.RainbowGradient
+	local SliderBar = RainbowGradient.Bar
+	local CanvasHitbox = ColorCanvas.Hitbox
+	local SliderHitbox = ColorSlider.Hitbox
+	local ColorPreview = Settings.ColorPreview
+	local ColorOptions = Settings.Options
+	local RedTextBox = ColorOptions.Red.TextBox
+	local BlueTextBox = ColorOptions.Blue.TextBox
+	local GreenTextBox = ColorOptions.Green.TextBox
+	local RainbowToggle = ColorOptions.Rainbow
+	local MinimizeButton = Main.Minimize
+	local CloseButton = Main.CloseWindow
+	local ResizeHandle = Window.ResizeHandle
+	Utils.Click(OverlayMain.Close, "BackgroundColor3");
+
+	local TargetSize = Size
+	local TargetPosition = UDim2new(0.5, -Size.X.Offset / 2, 0.5, -Size.Y.Offset / 2);
+	local WindowShadow = Window.UIShadow
+
+	-- Start slightly smaller & fully transparent, then pop/fade into place.
+	Window.Size = UDim2new(TargetSize.X.Scale, TargetSize.X.Offset - 36, TargetSize.Y.Scale, TargetSize.Y.Offset - 36)
+	Window.Position = UDim2new(TargetPosition.X.Scale, TargetPosition.X.Offset + 18, TargetPosition.Y.Scale, TargetPosition.Y.Offset + 18)
+	Window.GroupTransparency = 1
+	WindowShadow.Transparency = 1
+
+	TitleLabel.Text = Title
+	Window.Parent = self.UI
+
+	Utils.Tween(Window, "Quad", "Out", .3, {
+		Size = TargetSize,
+		Position = TargetPosition,
+		GroupTransparency = 0,
+	});
+	Utils.Tween(WindowShadow, "Quad", "Out", .3, {
+		Transparency = 0.7,
+	});
+
+	local function SetWindowIcon(Asset)
+		if Asset == nil or Asset == "" then
+			WindowIcon.Image = ""
+			WindowIcon.Visible = false
+			TitleLabel.Position = UDim2new(0, 18, 0, 0)
+			TitleLabel.Size = UDim2new(1, -82, 0, 38)
+			return
+		end
+
+		local Image = tostring(Asset)
+		if not Sfind(Image, "://", 1, true) then
+			Image = "rbxassetid://" .. Image
+		end
+
+		WindowIcon.Image = Image
+		WindowIcon.Visible = true
+		TitleLabel.Position = UDim2new(0, 46, 0, 0)
+		TitleLabel.Size = UDim2new(1, -110, 0, 38)
+	end
+
+	SetWindowIcon(Icon)
+
+	local ExpandedSize = Size
+	local Minimized = false
+	Utils.Resizable(Window, ResizeHandle, Vector2new(320, 200), function(NewSize)
+		ExpandedSize = NewSize
+	end)
+
+	AddConnection(CConnect(MinimizeButton.MouseButton1Click, function()
+		Minimized = not Minimized
+		Main.Selection.Visible = not Minimized
+		Main.Container.Visible = not Minimized
+		ResizeHandle.Visible = not Minimized
+		Window.ClipsDescendants = Minimized
+
+		Utils.Tween(Window, "Quad", "Out", .25, {
+			Size = Minimized and UDim2new(ExpandedSize.X.Scale, ExpandedSize.X.Offset, 0, 38) or ExpandedSize
+		})
+	end))
+
+	local Closing = false
+	AddConnection(CConnect(CloseButton.MouseButton1Click, function()
+		if Closing then
+			return
+		end
+		Closing = true
+
+		local ClosedSize = UDim2new(Window.Size.X.Scale, Window.Size.X.Offset - 24, Window.Size.Y.Scale, Window.Size.Y.Offset - 24)
+		local ClosedPosition = UDim2new(Window.Position.X.Scale, Window.Position.X.Offset + 12, Window.Position.Y.Scale, Window.Position.Y.Offset + 12)
+
+		local CloseTween = Utils.Tween(Window, "Quad", "In", .18, {
+			Size = ClosedSize,
+			Position = ClosedPosition,
+			GroupTransparency = 1,
+		});
+		Utils.Tween(WindowShadow, "Quad", "In", .18, {
+			Transparency = 1,
+		});
+		
+        Utils.TweenTrans(Window, 1)
+		CWait(CloseTween.Completed);
+
+		for Index = #Connections, 1, -1 do
+			pcall(Disconnect, Connections[Index])
+		end
+		Destroy(self.UI)
+	end))
+
+	Utils.Draggable(Window);
+
+	local Idle = false
+	local LeftWindow = false
+	local Timer = tick();
+	AddConnection(CConnect(Window.MouseEnter, function()
+		LeftWindow = false
+		if Idle then
+			Idle = false
+			Utils.TweenTrans(Window, 0)
+		end
+	end));
+	AddConnection(CConnect(Window.MouseLeave, function()
+		LeftWindow = true
+		Timer = tick();
+	end))
+
+	AddConnection(CConnect(Services.RunService.RenderStepped, function()
+		if LeftWindow then
+			local Time = tick() - Timer
+			if Time >= 3 and not Idle then
+				Utils.TweenTrans(Window, .75);
+				Idle = true
+			end
+		end
+	end));
+
+
+	local WindowLibrary = {}
+	local PageCount = 0
+	local SelectedPage
+	local SelectedTab
+	WindowLibrary.SetIcon = SetWindowIcon
+
+	WindowLibrary.GetPosition = function()
+		return Window.Position
+	end
+	WindowLibrary.SetPosition = function(NewPos)
+		Window.Position = NewPos
+	end
+
+	function WindowLibrary.NewPage(Title, Icon)
+		local Page = Clone(GuiObjects.New.Page);
+		local TextButton = Clone(GuiObjects.New.TextButton);
+		local TabTitle = TextButton.Title
+		local TabIcon = TextButton.Icon
+
+		local Sections = {}
+		local MinSectionWidth = 200
+		local SectionPadding = 10
+
+		local function RecalculateSectionWidths()
+			local Count = #Sections
+			if Count == 0 then
+				return
+			end
+
+			local AvailableWidth = Page.Selection.AbsoluteSize.X
+			local IdealWidth = (AvailableWidth - (SectionPadding * (Count - 1))) / Count
+			local FinalWidth = math.max(MinSectionWidth, IdealWidth)
+
+			for _, SectionFrame in next, Sections do
+				SectionFrame.Size = UDim2new(0, FinalWidth, 1, 0)
+			end
+		end
+
+		AddConnection(CConnect(GetPropertyChangedSignal(Page.Selection, "AbsoluteSize"), RecalculateSectionWidths));
+
+
+		local function SetTabIcon(Asset)
+			if Asset == nil or Asset == "" then
+				TabIcon.Image = ""
+				TabIcon.Visible = false
+				TabTitle.Position = UDim2new()
+				TabTitle.Size = UDim2new(1, 0, 1, 0)
+				TabTitle.TextXAlignment = Enum.TextXAlignment.Center
+				return
+			end
+
+			local Image = tostring(Asset)
+			if not Sfind(Image, "://", 1, true) then
+				Image = "rbxassetid://" .. Image
+			end
+
+			TabIcon.Image = Image
+			TabIcon.Visible = true
+			TabTitle.Position = UDim2new(0, 30, 0, 0)
+			TabTitle.Size = UDim2new(1, -38, 1, 0)
+			TabTitle.TextXAlignment = Enum.TextXAlignment.Left
+		end
+
+		if (PageCount == 0) then
+			TabTitle.TextColor3 = Colors.PageTextPressed
+			TabIcon.ImageColor3 = Colors.PageTextPressed
+			TextButton.BackgroundColor3 = Colors.PageBackgroundPressed
+			TextButton.BorderColor3 = Colors.PageBorderPressed
+			SelectedPage = Page
+			SelectedTab = TextButton
+		end
+
+		AddConnection(CConnect(TextButton.MouseEnter, function()
+			if (SelectedPage ~= Page) then
+				Utils.Tween(TextButton, "Quad", "Out", .25, {
+					BackgroundColor3 = Colors.PageBackgroundHover;
+					BorderColor3 = Colors.PageBorderHover;
+				});
+				Utils.Tween(TabTitle, "Quad", "Out", .25, { TextColor3 = Colors.PageTextHover; });
+				Utils.Tween(TabIcon, "Quad", "Out", .25, { ImageColor3 = Colors.PageTextHover; });
+			end
+		end));
+
+		AddConnection(CConnect(TextButton.MouseLeave, function()
+			if (SelectedPage ~= Page) then
+				Utils.Tween(TextButton, "Quad", "Out", .25, {
+					BackgroundColor3 = Colors.PageBackgroundIdle;
+					BorderColor3 = Colors.PageBackgroundIdle;
+				});
+				Utils.Tween(TabTitle, "Quad", "Out", .25, { TextColor3 = Colors.PageTextIdle; });
+				Utils.Tween(TabIcon, "Quad", "Out", .25, { ImageColor3 = Colors.PageTextIdle; });
+			end
+		end));
+
+		AddConnection(CConnect(TextButton.MouseButton1Down, function()
+			if (SelectedPage ~= Page) then
+				Utils.Tween(TabTitle, "Quad", "Out", .25, { TextColor3 = Colors.PageTextPressed; });
+				Utils.Tween(TabIcon, "Quad", "Out", .25, { ImageColor3 = Colors.PageTextPressed; });
+			end
+		end));
+
+		AddConnection(CConnect(TextButton.MouseButton1Click, function()
+			if (SelectedPage ~= Page) then
+				Utils.Tween(TextButton, "Quad", "Out", .25, {
+					BackgroundColor3 = Colors.PageBackgroundPressed;
+					BorderColor3 = Colors.PageBorderPressed;
+				});
+				Utils.Tween(TabTitle, "Quad", "Out", .25, { TextColor3 = Colors.PageTextPressed; });
+				Utils.Tween(TabIcon, "Quad", "Out", .25, { ImageColor3 = Colors.PageTextPressed; });
+
+				Utils.Tween(SelectedTab, "Quad", "Out", .25, {
+					BackgroundColor3 = Colors.PageBackgroundIdle;
+					BorderColor3 = Colors.PageBackgroundIdle;
+				});
+				Utils.Tween(SelectedTab.Title, "Quad", "Out", .25, { TextColor3 = Colors.PageTextIdle; });
+				Utils.Tween(SelectedTab.Icon, "Quad", "Out", .25, { ImageColor3 = Colors.PageTextIdle; });
+
+				SelectedPage = Page
+				SelectedTab = TextButton
+				Window.Main.Container.UIPageLayout:JumpTo(SelectedPage)
+			end
+		end));
+
+
+		Page.Name = Title
+		TextButton.Name = Title
+		TabTitle.Text = Title
+		SetTabIcon(Icon)
+
+		Page.Parent = Window.Main.Container
+		TextButton.Parent = Window.Main.Selection
+
+
+
+		if (PageCount == 0) then
+			Window.Main.Container.UIPageLayout:JumpTo(Page)
+		end
+
+		PageCount = PageCount + 1
+
+		local PageLibrary = {}
+		PageLibrary.SetIcon = SetTabIcon
+
+		function PageLibrary.NewSection(Title)
+			local Section = GuiObjects.Section.Container:Clone()
+			local SectionOptions = Section.Options
+			local SectionUIListLayout = Section.Options.UIListLayout
+
+
+			Section.Title.Text = Title
+			Section.Parent = Page.Selection
+
+			Sections[#Sections + 1] = Section
+			RecalculateSectionWidths()
+
+			AddConnection(CConnect(GetPropertyChangedSignal(SectionUIListLayout, "AbsoluteContentSize"), function()
+				SectionOptions.CanvasSize = UDim2.fromOffset(0, SectionUIListLayout.AbsoluteContentSize.Y + 5)
+			end))
+
+			local ElementLibrary = {}
+
+
+
+
+
+
+
+
+
+			local BaseZIndex = (Section.Options.ZIndex or 1) + 2
+			local DisabledToggleBackground = Color3fromRGB(12, 12, 12)
+			local DisabledToggleKnob = Color3fromRGB(235, 235, 235)
+
+			local function GetToggleKnobColor(Background)
+				local Brightness = (Background.R * 0.299) + (Background.G * 0.587) + (Background.B * 0.114)
+				return Brightness >= 0.65 and Color3fromRGB(0, 0, 0) or DisabledToggleKnob
+			end
+
+
+			local function ToggleFunction(Container, Enabled, Callback)
+				Enabled = Enabled == true
+				Callback = Callback or function() end
+				local Switch = Container.Switch
+				local Hitbox = Container.Hitbox
+				Container.BackgroundColor3 = Enabled and self.ColorTheme or DisabledToggleBackground
+				Switch.BackgroundColor3 = Enabled and GetToggleKnobColor(self.ColorTheme) or DisabledToggleKnob
+				Switch.Position = Enabled and UDim2.new(1, -18, 0, 2) or UDim2.fromOffset(2, 2)
+
+				AddConnection(CConnect(Hitbox.MouseButton1Click, function()
+					Enabled = not Enabled
+
+					Utils.Tween(Switch, "Quad", "Out", .25, {
+						Position = Enabled and UDim2.new(1, -18, 0, 2) or UDim2.fromOffset(2, 2),
+						BackgroundColor3 = Enabled and GetToggleKnobColor(self.ColorTheme) or DisabledToggleKnob
+					});
+					Utils.Tween(Container, "Quad", "Out", .25, {
+						BackgroundColor3 = Enabled and self.ColorTheme or DisabledToggleBackground
+					});
+
+					Callback(Enabled);
+				end));
+			end
+
+
+			function ElementLibrary.Toggle(Title, Enabled, Callback)
+				local Toggle = Clone(GuiObjects.Elements.Toggle);
+				local Container = Toggle.Container
+				ToggleFunction(Container, Enabled, Callback);
+
+				Toggle.Title.Text = Title
+				Toggle.Parent = Section.Options
+			end
+
+
+			function ElementLibrary.Slider(Title, Args, Callback)
+				Args = Args or {}
+				Callback = Callback or function() end
+
+				local Minimum = tonumber(Args.Min) or 0
+				local Maximum = tonumber(Args.Max) or 100
+				assert(Maximum > Minimum, "[UI] Slider Max must be greater than Min.")
+				local Step = tonumber(Args.Step) or 1
+				assert(Step > 0, "[UI] Slider Step must be greater than zero.")
+				local Default = clamp(tonumber(Args.Default) or Minimum, Minimum, Maximum)
+				Default = Minimum + round((Default - Minimum) / Step) * Step
+				Default = clamp(Default, Minimum, Maximum)
+
+				local Slider = Clone(GuiObjects.Elements.Slider);
+				local Container = Slider.Container
+				local ContainerSliderBar = Container.SliderBar
+				local BarFrame = ContainerSliderBar.BarFrame
+				local Bar = BarFrame.Bar
+				local Label = Bar.Label
+				local Hitbox = Container.Hitbox
+
+				Bar.BackgroundColor3 = self.ColorTheme
+				Bar.Size = UDim2.fromScale((Default - Minimum) / (Maximum - Minimum), 1);
+				Label.Text = tostring(Default);
+				Label.BackgroundTransparency = 1
+				Label.TextTransparency = 1
+				Container.Min.Text = tostring(Minimum);
+				Container.Max.Text = tostring(Maximum);
+				Slider.Title.Text = Title
+
+				local Moving = false
+
+				local function Update()
+					local RightBound = BarFrame.AbsoluteSize.X
+					local Position = clamp(Mouse.X - BarFrame.AbsolutePosition.X, 0, RightBound);
+					local Value = Minimum + (Maximum - Minimum) * (Position / RightBound)
+					Value = Minimum + round((Value - Minimum) / Step) * Step
+					Value = clamp(Value, Minimum, Maximum)
+					Callback(Value);
+
+					local Percent = (Value - Minimum) / (Maximum - Minimum)
+					local Size = UDim2.fromScale(Percent, 1);
+					local Tween = Utils.Tween(Bar, "Linear", "Out", .05, {
+						Size = Size
+					});
+
+					Label.Text = Value
+					CWait(Tween.Completed);
+				end
+
+				AddConnection(CConnect(Hitbox.MouseButton1Down, function()
+					Moving = true
+
+					Utils.Tween(Label, "Quad", "Out", .25, {
+						BackgroundTransparency = 0;
+						TextTransparency = 0;
+					});
+
+					Update();
+				end))
+
+				AddConnection(CConnect(Services.UserInputService.InputEnded, function(Input)
+					if (Input.UserInputType == Enum.UserInputType.MouseButton1 and Moving) then
+						Moving = false
+
+						Utils.Tween(Label, "Quad", "Out", .25, {
+							BackgroundTransparency = 1;
+							TextTransparency = 1;
+						});
+					end
+				end));
+
+				AddConnection(CConnect(Mouse.Move, Debounce(function()
+					if Moving then
+						Update()
+					end
+				end)))
+
+				Slider.Parent = Section.Options
+			end
+
+			function ElementLibrary.ColorPicker(Title, DefaultColor, Callback)
+				local SelectColor = Clone(GuiObjects.Elements.SelectColor);
+				local CurrentColor = DefaultColor
+				local Button = SelectColor.Button
+
+				local H, S, V = DefaultColor.ToHSV(DefaultColor);
+				local Opened = false
+				local Rainbow = false
+
+				local function UpdateText()
+					RedTextBox.PlaceholderText = tostring(floor(CurrentColor.R * 255));
+					GreenTextBox.PlaceholderText = tostring(floor(CurrentColor.G * 255));
+					BlueTextBox.PlaceholderText = tostring(floor(CurrentColor.B * 255));
+				end
+
+				local function UpdateColor()
+					H, S, V = CurrentColor.ToHSV(CurrentColor);
+
+					SliderBar.Position = UDim2new(0, 0, H, 2);
+					CanvasBar.Position = UDim2new(S, 2, 1 - V, 2);
+					ColorGradient.UIGradient.Color = Utils.MakeGradient({
+						[1] = Color3new(1, 1, 1);
+						[2] = Color3fromHSV(H, 1, 1);
+					});
+
+					ColorPreview.BackgroundColor3 = CurrentColor
+					UpdateText();
+				end
+
+				local function UpdateHue(Hue)
+					SliderBar.Position = UDim2.new(0, 0, Hue, 2)
+					ColorGradient.UIGradient.Color = Utils.MakeGradient({
+						[1] = Color3.new(1, 1, 1);
+						[2] = Color3.fromHSV(Hue, 1, 1);
+					});
+
+					ColorPreview.BackgroundColor3 = CurrentColor
+					UpdateText();
+				end
+
+				local function ColorSliderInit()
+					local Moving = false
+
+					local function Update()
+						if Opened and not Rainbow then
+							local LowerBound = SliderHitbox.AbsoluteSize.Y
+							local Position = math.clamp(Mouse.Y - SliderHitbox.AbsolutePosition.Y, 0, LowerBound);
+							local Value = Position / LowerBound
+
+							H = Value
+							CurrentColor = Color3.fromHSV(H, S, V);
+							ColorPreview.BackgroundColor3 = CurrentColor
+							ColorGradient.UIGradient.Color = Utils.MakeGradient({
+								[1] = Color3.new(1, 1, 1);
+								[2] = Color3.fromHSV(H, 1, 1);
+							});
+
+							UpdateText();
+
+							local Position = UDim2.new(0, 0, Value, 2)
+							local Tween = Utils.Tween(SliderBar, "Linear", "Out", .05, {
+								Position = Position
+							});
+
+							Callback(CurrentColor);
+							CWait(Tween.Completed);
+						end
+					end
+
+					AddConnection(CConnect(SliderHitbox.MouseButton1Down, function()
+						Moving = true
+						Update();
+					end));
+
+					AddConnection(CConnect(Services.UserInputService.InputEnded, function(Input)
+						if (Input.UserInputType == Enum.UserInputType.MouseButton1 and Moving) then
+							Moving = false
+						end
+					end));
+
+					AddConnection(CConnect(Mouse.Move, Debounce(function()
+						if Moving then
+							Update();
+						end
+					end)));
+				end
+				local function ColorCanvasInit()
+					local Moving = false
+
+					local function Update()
+						if Opened then
+							local LowerBound = CanvasHitbox.AbsoluteSize.Y
+							local YPosition = clamp(Mouse.Y - CanvasHitbox.AbsolutePosition.Y, 0, LowerBound)
+							local YValue = YPosition / LowerBound
+							local RightBound = CanvasHitbox.AbsoluteSize.X
+							local XPosition = clamp(Mouse.X - CanvasHitbox.AbsolutePosition.X, 0, RightBound)
+							local XValue = XPosition / RightBound
+
+							S = XValue
+							V = 1 - YValue
+
+							CurrentColor = Color3.fromHSV(H, S, V);
+							ColorPreview.BackgroundColor3 = CurrentColor
+							UpdateText();
+
+							local Position = UDim2.new(XValue, 2, YValue, 2);
+							local Tween = Utils.Tween(CanvasBar, "Linear", "Out", .05, {
+								Position = Position
+							});
+							Callback(CurrentColor);
+							CWait(Tween.Completed);
+						end
+					end
+
+					AddConnection(CConnect(CanvasHitbox.MouseButton1Down, function()
+						Moving = true
+						Update();
+					end));
+
+					AddConnection(CConnect(Services.UserInputService.InputEnded, function(Input)
+						if Input.UserInputType == Enum.UserInputType.MouseButton1 and Moving then
+							Moving = false
+						end
+					end));
+
+					AddConnection(CConnect(Mouse.Move, Debounce(function()
+						if Moving then
+							Update();
+						end
+					end)));
+				end
+
+				ColorSliderInit();
+				ColorCanvasInit();
+
+				AddConnection(CConnect(Button.MouseButton1Click, function()
+					if not Opened then
+						Opened = true
+						UpdateColor();
+						RainbowToggle.Container.Switch.Position = Rainbow and UDim2.new(1, -18, 0, 2) or UDim2.fromOffset(2, 2);
+						RainbowToggle.Container.BackgroundColor3 = Rainbow and self.ColorTheme or Colors.ElementBackground
+						Overlay.Visible = true
+						OverlayMain.Visible = false
+						Utils.Intro(OverlayMain);
+					end
+				end));
+
+				AddConnection(CConnect(ClosePicker.MouseButton1Click, Debounce(function()
+					Button.BackgroundColor3 = CurrentColor
+					Utils.Intro(OverlayMain);
+					Overlay.Visible = false
+					Opened = false
+				end)));
+
+				AddConnection(CConnect(RedTextBox.FocusLost, function()
+					if Opened then
+						local Number = tonumber(RedTextBox.Text)
+						if Number then
+							Number = clamp(floor(Number), 0, 255);
+							CurrentColor = Color3new(Number / 255, CurrentColor.G, CurrentColor.B);
+							UpdateColor();
+							RedTextBox.PlaceholderText = tostring(Number);
+							Callback(CurrentColor);
+						end
+						RedTextBox.Text = ""
+					end
+				end));
+
+				AddConnection(CConnect(GreenTextBox.FocusLost, function()
+					if Opened then
+						local Number = tonumber(GreenTextBox.Text)
+						if Number then
+							Number = clamp(floor(Number), 0, 255);
+							CurrentColor = Color3new(CurrentColor.R, Number / 255, CurrentColor.B);
+							UpdateColor();
+							GreenTextBox.PlaceholderText = tostring(Number);
+							Callback(CurrentColor);
+						end
+						GreenTextBox.Text = ""
+					end
+				end));
+
+				AddConnection(CConnect(BlueTextBox.FocusLost, function()
+					if Opened then
+						local Number = tonumber(BlueTextBox.Text);
+						if Number then
+							Number = clamp(floor(Number), 0, 255);
+							CurrentColor = Color3new(CurrentColor.R, CurrentColor.G, Number / 255);
+							UpdateColor();
+							BlueTextBox.PlaceholderText = tostring(Number);
+							Callback(CurrentColor);
+						end
+						BlueTextBox.Text = ""
+					end
+				end));
+
+				ToggleFunction(RainbowToggle.Container, false, function(Callback)
+					if Opened then
+						Rainbow = Callback
+					end
+				end);
+
+				AddConnection(CConnect(Services.RunService.RenderStepped, function()
+					if Rainbow then
+						local Hue = (tick() / 5) % 1
+						CurrentColor = Color3.fromHSV(Hue, S, V);
+
+						if Opened then
+							UpdateHue(Hue);
+						end
+
+						Button.BackgroundColor3 = CurrentColor
+						Callback(CurrentColor);
+					end
+				end));
+
+				Button.BackgroundColor3 = DefaultColor
+				SelectColor.Title.Text = Title
+				SelectColor.Parent = Section.Options
+			end
+
+			function ElementLibrary.Dropdown(Title, Options, Callback)
+				Options = Options or {}
+				Callback = Callback or function() end
+
+				local DropdownElement = GuiObjects.Elements.Dropdown.DropdownElement:Clone()
+				local DropdownSelection = GuiObjects.Elements.Dropdown.DropdownSelection:Clone()
+				local TextButton = GuiObjects.Elements.Dropdown.TextButton
+				local Button = DropdownElement.Button
+				local Opened = false
+				local OptionCount = 0
+				local ContentHeight = 0
+				local OptionsContainer = DropdownSelection.Frame.Container
+				local Layout = OptionsContainer.UIListLayout
+
+				local function ToggleDropdown()
+					Opened = not Opened
+
+					if (Opened) then
+						DropdownSelection.Frame.Visible = true
+						DropdownSelection.Visible = true
+
+						Utils.Tween(DropdownSelection, "Quad", "Out", .25, {
+							Size = UDim2.new(1, 0, 0, clamp(ContentHeight + 8, 0, 150))
+						});
+						Utils.Tween(DropdownElement.Button.Icon, "Quad", "Out", .25, {
+							Rotation = 180
+						});
+					else
+						Utils.Tween(DropdownElement.Button.Icon, "Quad", "Out", .25, {
+							Rotation = 0
+						});
+						CWait(Utils.Tween(DropdownSelection, "Quad", "Out", .25, {
+							Size = UDim2.new(1, -10, 0, 0)
+						}).Completed);
+
+						DropdownSelection.Frame.Visible = false
+						DropdownSelection.Visible = false
+					end
+				end
+
+				for _, v in next, Options do
+					OptionCount = OptionCount + 1
+					local Value = v
+					local OptionButton = Clone(TextButton);
+
+					AddConnection(CConnect(OptionButton.MouseButton1Click, function()
+						DropdownElement.Title.Text = Title .. ": " .. tostring(Value)
+						Callback(Value)
+						ToggleDropdown();
+					end));
+
+					Utils.Click(OptionButton, "BackgroundColor3");
+					OptionButton.Text = tostring(Value)
+					OptionButton.Parent = OptionsContainer
+				end
+
+				ContentHeight = (TextButton.Size.Y.Offset * OptionCount) + (Layout.Padding.Offset * math.max(OptionCount - 1, 0))
+				OptionsContainer.CanvasSize = UDim2.fromOffset(0, ContentHeight)
+
+				AddConnection(CConnect(Button.MouseButton1Click, ToggleDropdown));
+
+				DropdownElement.Title.Text = Title
+				DropdownSelection.Visible = false
+				DropdownSelection.Frame.Visible = false
+				DropdownSelection.Size = UDim2.new(1, 0, 0, 0)
+				DropdownElement.Parent = Section.Options
+				DropdownSelection.Parent = Section.Options
+			end
+
+
+
+
+
+
+
+
+
+			function ElementLibrary.Button(Title, Callback)
+				local Button = Instancenew("TextButton")
+				Button.Name = "Button"
+				Button.Size = UDim2new(1, 0, 0, 34)
+				Button.BackgroundColor3 = Colors.ElementBackground
+				Button.BorderSizePixel = 0
+				Button.AutoButtonColor = false
+				Button.Text = ""
+				Button.ZIndex = BaseZIndex
+
+				local Corner = Instancenew("UICorner")
+				Corner.CornerRadius = UDimnew(0, 4)
+				Corner.Parent = Button
+
+				local Label = Instancenew("TextLabel")
+				Label.Name = "Title"
+				Label.BackgroundTransparency = 1
+				Label.Size = UDim2new(1, -20, 1, 0)
+				Label.Position = UDim2new(0, 10, 0, 0)
+				Label.Font = Enum.Font.GothamMedium
+				Label.TextSize = 13
+				Label.TextColor3 = Colors.PageTextIdle
+				Label.TextXAlignment = Enum.TextXAlignment.Left
+				Label.Text = Title
+				Label.ZIndex = BaseZIndex + 1
+				Label.Parent = Button
+
+				AddConnection(CConnect(Button.MouseButton1Click, function()
+					Callback();
+				end));
+
+				Utils.Click(Button, "BackgroundColor3");
+
+				Button.Parent = Section.Options
+				return Button
+			end
+
+			function ElementLibrary.Input(Title, Placeholder, Callback)
+				local Container = Instancenew("Frame")
+				Container.Name = "Input"
+				Container.Size = UDim2new(1, 0, 0, 34)
+				Container.BackgroundTransparency = 1
+				Container.ZIndex = BaseZIndex
+
+				local TitleLabel = Instancenew("TextLabel")
+				TitleLabel.Name = "Title"
+				TitleLabel.BackgroundTransparency = 1
+				TitleLabel.Size = UDim2new(0.45, 0, 1, 0)
+				TitleLabel.Font = Enum.Font.GothamMedium
+				TitleLabel.TextSize = 13
+				TitleLabel.TextColor3 = Colors.PageTextIdle
+				TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+				TitleLabel.Text = Title
+				TitleLabel.ZIndex = BaseZIndex + 1
+				TitleLabel.Parent = Container
+
+				local Box = Instancenew("TextBox")
+				Box.Name = "TextBox"
+				Box.Size = UDim2new(0.55, -10, 0, 26)
+				Box.Position = UDim2new(0.45, 10, 0.5, -13)
+				Box.BackgroundColor3 = Colors.ElementBackground
+				Box.BorderSizePixel = 0
+				Box.Font = Enum.Font.Gotham
+				Box.TextSize = 12
+				Box.TextColor3 = Colors.PageTextIdle
+				Box.PlaceholderText = Placeholder or ""
+				Box.PlaceholderColor3 = Colors.PageTextIdle
+				Box.Text = ""
+				Box.ClearTextOnFocus = false
+				Box.ZIndex = BaseZIndex + 1
+				Box.Parent = Container
+
+				local Corner = Instancenew("UICorner")
+				Corner.CornerRadius = UDimnew(0, 4)
+				Corner.Parent = Box
+
+				AddConnection(CConnect(Box.Focused, function()
+					Utils.Tween(Box, "Quad", "Out", .25, {
+						BackgroundColor3 = Utils.MultColor3(Colors.ElementBackground, 1.4)
+					});
+				end));
+
+				AddConnection(CConnect(Box.FocusLost, function(EnterPressed)
+					Utils.Tween(Box, "Quad", "Out", .25, {
+						BackgroundColor3 = Colors.ElementBackground
+					});
+					Callback(Box.Text, EnterPressed);
+				end));
+
+				Container.Parent = Section.Options
+				return Box
+			end
+
+			function ElementLibrary.Label(Text)
+				local Label = Instancenew("TextLabel")
+				Label.Name = "Label"
+				Label.BackgroundTransparency = 1
+				Label.Size = UDim2new(1, 0, 0, 24)
+				Label.Font = Enum.Font.Gotham
+				Label.TextSize = 13
+				Label.TextColor3 = Colors.PageTextIdle
+				Label.TextXAlignment = Enum.TextXAlignment.Left
+				Label.TextWrapped = true
+				Label.Text = Text
+				Label.ZIndex = BaseZIndex
+				Label.Parent = Section.Options
+
+				return {
+					Set = function(NewText)
+						Label.Text = NewText
+					end
+				}
+			end
+
+
+
+			function ElementLibrary.KeyValue(Key, Value)
+				local Container = Instancenew("Frame")
+				Container.Name = "KeyValue"
+				Container.Size = UDim2new(1, 0, 0, 24)
+				Container.BackgroundTransparency = 1
+				Container.ZIndex = BaseZIndex
+
+				local KeyLabel = Instancenew("TextLabel")
+				KeyLabel.Name = "Key"
+				KeyLabel.BackgroundTransparency = 1
+				KeyLabel.Size = UDim2new(0.45, -8, 1, 0)
+				KeyLabel.Font = Enum.Font.Gotham
+				KeyLabel.TextSize = 13
+				KeyLabel.TextColor3 = Colors.PageTextIdle
+				KeyLabel.TextTruncate = Enum.TextTruncate.AtEnd
+				KeyLabel.TextXAlignment = Enum.TextXAlignment.Left
+				KeyLabel.Text = Key
+				KeyLabel.ZIndex = BaseZIndex + 1
+				KeyLabel.Parent = Container
+
+				local ValueLabel = Instancenew("TextLabel")
+				ValueLabel.Name = "Value"
+				ValueLabel.BackgroundTransparency = 1
+				ValueLabel.Position = UDim2new(0.45, 8, 0, 0)
+				ValueLabel.Size = UDim2new(0.55, -8, 1, 0)
+				ValueLabel.Font = Enum.Font.GothamMedium
+				ValueLabel.TextSize = 13
+				ValueLabel.TextColor3 = self.ColorTheme
+				ValueLabel.TextTruncate = Enum.TextTruncate.AtEnd
+				ValueLabel.TextXAlignment = Enum.TextXAlignment.Left
+				ValueLabel.Text = tostring(Value)
+				ValueLabel.ZIndex = BaseZIndex + 1
+				ValueLabel.Parent = Container
+
+				local function UpdateKeyValueLayout()
+					local AvailableWidth = Container.AbsoluteSize.X
+					if AvailableWidth <= 0 then
+						return
+					end
+
+					local KeyWidth = math.min(KeyLabel.TextBounds.X, AvailableWidth * 0.45)
+					KeyLabel.Size = UDim2.fromOffset(KeyWidth, 24)
+					ValueLabel.Position = UDim2.fromOffset(KeyWidth + 12, 0)
+					ValueLabel.Size = UDim2.fromOffset(math.max(AvailableWidth - KeyWidth - 12, 0), 24)
+				end
+
+				Container.Parent = Section.Options
+				AddConnection(CConnect(GetPropertyChangedSignal(Container, "AbsoluteSize"), UpdateKeyValueLayout))
+				AddConnection(CConnect(GetPropertyChangedSignal(KeyLabel, "TextBounds"), UpdateKeyValueLayout))
+				UpdateKeyValueLayout()
+
+				return {
+					Set = function(NewValue)
+						ValueLabel.Text = tostring(NewValue)
+					end
+				}
+			end
+
+			function ElementLibrary.Divider()
+				local Line = Instancenew("Frame")
+				Line.Name = "Divider"
+				Line.Size = UDim2new(1, 0, 0, 1)
+				Line.BackgroundColor3 = Colors.PageBorderIdle
+				Line.BorderSizePixel = 0
+				Line.ZIndex = BaseZIndex
+				Line.Parent = Section.Options
+			end
+
+			return ElementLibrary
+
+		end
+
+		return PageLibrary
+	end
+
+	return WindowLibrary
+end
+
+print("UI Loaded...");
+
+return UILibrary
