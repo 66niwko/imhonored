@@ -1304,7 +1304,6 @@ function UILibrary:LoadWindow(Title, Size, Icon)
 	local TargetPosition = UDim2new(0.5, -Size.X.Offset / 2, 0.5, -Size.Y.Offset / 2);
 	local WindowShadow = Window.UIShadow
 
-	-- Start slightly smaller & fully transparent, then pop/fade into place.
 	Window.Size = UDim2new(TargetSize.X.Scale, TargetSize.X.Offset - 36, TargetSize.Y.Scale, TargetSize.Y.Offset - 36)
 	Window.Position = UDim2new(TargetPosition.X.Scale, TargetPosition.X.Offset + 18, TargetPosition.Y.Scale, TargetPosition.Y.Offset + 18)
 	Window.GroupTransparency = 1
